@@ -4,7 +4,7 @@ from resume_dataset import resume_data
 from job_description_dataset import jobdescriptiondata
 from skill_aliases import skill_aliases
 
-def normalizeskills(rawskills):
+def normalize_skills(raw_skills):
     skills = []
     for skill in raw_skills.split(","):
         skill = skill.strip().lower()
@@ -15,68 +15,68 @@ def normalizeskills(rawskills):
 def deduplicate_skills(skills):
     return list(set(skills))
 
-def buildvocabulary(resumedata):
+def build_vocabulary(resume_data):
     vocabulary = set()
     for resume in resume_data:
-        skills = normalizeskills(resume["rawskills"])
+        skills = normalize_skills(resume["raw_skills"])
         vocabulary.update(skills)
     return sorted(list(vocabulary))
 
-def computetfidf(resume_data, vocabulary):
-    tfidfvectors = []
+def compute_tfidf(resume_data, vocabulary):
+    tfidf_vectors = []
     for resume in resume_data:
-        skills = normalizeskills(resume["rawskills"])
-        tfidfvector = []
+        skills = normalize_skills(resume["raw_skills"])
+        tfidf_vector = []
         for skill in vocabulary:
-            tf = skills.count(skill) / len(skills)
-            idf = math.log(10 / sum(1 for r in resumedata if skill in normalizeskills(r["raw_skills"])))
-            tfidfvector.append(tf * idf)
-        tfidfvectors.append(tfidfvector)
-    return tfidfvectors
+            tf = skills.count(skill) / len(skills) if skills else 0
+            idf = math.log(10 / sum(1 for r in resume_data if skill in normalize_skills(r["raw_skills"])))
+            tfidf_vector.append(tf * idf)
+        tfidf_vectors.append(tfidf_vector)
+    return tfidf_vectors
 
-def buildjdvectors(jobdescriptiondata, vocabulary):
+def build_jd_vectors(jobdescriptiondata, vocabulary):
     jd_vectors = []
     for jd in jobdescriptiondata:
-        requiredskills = [skill.lower() for skill in jd["requiredskills"]]
-        preferredskills = [skill.lower() for skill in jd["preferredskills"]]
+        required_skills = [skill.lower() for skill in jd["required_skills"]]
+        preferred_skills = [skill.lower() for skill in jd["preferred_skills"]]
         jd_vector = []
         for skill in vocabulary:
-            if skill in requiredskills or skill in preferredskills:
+            if skill in required_skills or skill in preferred_skills:
                 jd_vector.append(1)
             else:
                 jd_vector.append(0)
-        jdvectors.append(jdvector)
+        jd_vectors.append(jd_vector)
     return jd_vectors
 
-def computecosinesimilarity(tfidfvectors, jd_vectors):
+def compute_cosine_similarity(tfidf_vectors, jd_vectors):
     similarities = []
-    for tfidfvector in tfidfvectors:
+    for tfidf_vector in tfidf_vectors:
         similarities.append([])
-        for jdvector in jdvectors:
-            dotproduct = sum(a * b for a, b in zip(tfidfvector, jdvector))
-            magnitudea = math.sqrt(sum(a**2 for a in tfidf_vector))
-            magnitudeb = math.sqrt(sum(b**2 for b in jdvector))
-            similarity = dotproduct / (magnitudea * magnitude_b)
+        for jd_vector in jd_vectors:
+            dot_product = sum(a * b for a, b in zip(tfidf_vector, jd_vector))
+            magnitude_a = math.sqrt(sum(a**2 for a in tfidf_vector))
+            magnitude_b = math.sqrt(sum(b**2 for b in jd_vector))
+            similarity = dot_product / (magnitude_a * magnitude_b) if magnitude_a * magnitude_b != 0 else 0
             similarities[-1].append(similarity)
     return similarities
 
-def rank_candidates(similarities):
+def rank_candidates(similarities, resume_data):
     ranked_candidates = []
     for i, similarity in enumerate(similarities):
-        rankedcandidates.append((resumedata[i]["candidate"], similarity))
+        ranked_candidates.append((resume_data[i]["candidate"], similarity))
     ranked_candidates.sort(key=lambda x: x[1], reverse=True)
     return ranked_candidates
 
 def main():
-    vocabulary = buildvocabulary(resumedata)
-    tfidfvectors = computetfidf(resume_data, vocabulary)
-    jdvectors = buildjdvectors(jobdescription_data, vocabulary)
-    similarities = computecosinesimilarity(tfidfvectors, jd_vectors)
-    rankedcandidates = rankcandidates(similarities)
-    for jdid, jd in enumerate(jobdescription_data):
-        print(f"JD-{jd_id+1} — {jd['company']} ({jd['role']})")
-        for candidate, similarity in rankedcandidates[jdid][:3]:
+    vocabulary = build_vocabulary(resume_data)
+    tfidf_vectors = compute_tfidf(resume_data, vocabulary)
+    jd_vectors = build_jd_vectors(jobdescriptiondata, vocabulary)
+    similarities = compute_cosine_similarity(tfidf_vectors, jd_vectors)
+    for jdid, jd in enumerate(jobdescriptiondata):
+        print(f"JD-{jdid+1} — {jd['company']} ({jd['role']})")
+        ranked_candidates = rank_candidates([s[jdid] for s in similarities], resume_data)
+        for candidate, similarity in ranked_candidates[:3]:
             print(f"{candidate} ({similarity:.2f})")
 
-if __name__ == "main":
+if __name__ == "__main__":
     main()
