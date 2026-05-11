@@ -1,8 +1,8 @@
 import math
 from collections import Counter
-from resumedataset import resumedata
-from jobdescriptiondataset import jobdescriptiondata
-from skillaliases import skillaliases
+from resume_dataset import resume_data
+from job_description_dataset import jobdescriptiondata
+from skill_aliases import skill_aliases
 
 def normalizeskills(rawskills):
     skills = []
@@ -54,8 +54,8 @@ def computecosinesimilarity(tfidfvectors, jd_vectors):
         similarities.append([])
         for jdvector in jdvectors:
             dotproduct = sum(a * b for a, b in zip(tfidfvector, jdvector))
-            magnitudea = math.sqrt(sum(a  2 for a in tfidf_vector))
-            magnitudeb = math.sqrt(sum(b  2 for b in jdvector))
+            magnitudea = math.sqrt(sum(a**2 for a in tfidf_vector))
+            magnitudeb = math.sqrt(sum(b**2 for b in jdvector))
             similarity = dotproduct / (magnitudea * magnitude_b)
             similarities[-1].append(similarity)
     return similarities
@@ -78,5 +78,5 @@ def main():
         for candidate, similarity in rankedcandidates[jdid][:3]:
             print(f"{candidate} ({similarity:.2f})")
 
-if name == "main":
+if __name__ == "main":
     main()
